@@ -1,0 +1,15 @@
+# BananaSnap
+
+BananaSnap es una aplicación móvil de nutrición que reconoce alimentos mediante inteligencia artificial y presenta estimaciones nutricionales.
+
+## Páginas públicas
+- / — Información principal, características y enlaces oficiales de descarga.
+- /privacidad — Política de privacidad, tratamiento de datos y eliminación de cuenta.
+
+## Enlaces oficiales
+- Google Play: https://play.google.com/store/apps/details?id=com.cipherchabon.banana_app&pcampaignid=web_share
+- Apple: https://apple.bananasnap.ar/
+- Contacto: bananasnapp@gmail.com
+
+## Uso del contenido
+La información del sitio describe las funciones de BananaSnap. No reemplaza el consejo de profesionales de la salud.

@@ -1,0 +1,74 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { ArrowLeft, Mail, ShieldCheck } from "lucide-react";
+import { useEffect } from "react";
+import type { MouseEvent } from "react";
+import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
+
+const OG_IMAGE = "https://id-preview--8ece6bab-cb16-4d9b-a88e-83472da11663.lovable.app/og-image.jpg";
+
+export const Route = createFileRoute("/privacidad")({
+  component: PrivacyPage,
+  head: () => ({
+    meta: [
+      { title: "Política de Privacidad — BananaSnap" },
+      { name: "description", content: "Conocé cómo BananaSnap recopila, utiliza, almacena y protege tu información personal." },
+      { property: "og:title", content: "Política de Privacidad — BananaSnap" },
+      { property: "og:description", content: "Información sobre privacidad, seguridad y eliminación de datos en BananaSnap." },
+      { property: "og:type", content: "article" }, { property: "og:url", content: "/privacidad" },
+      { property: "og:image", content: OG_IMAGE }, { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:image", content: OG_IMAGE },
+    ],
+    links: [{ rel: "canonical", href: "/privacidad" }],
+  }),
+});
+
+type PrivacyCopy = { title: string; pageTitle: string; back: string; date: string; intro: string; sections: { title: string; paragraphs?: string[]; items?: string[]; subtitle?: string; ordered?: string[] }[]; contactIntro: string };
+
+const privacy: Record<Language, PrivacyCopy> = {
+  es: {
+    title: "Política de Privacidad — BananaSnap", pageTitle: "Política de Privacidad de BananaSnap", back: "Volver al inicio", date: "Vigente desde: 30/08/2024 | Última actualización: 2026", intro: "BananaSnap se compromete a proteger la privacidad de sus usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos su información cuando utiliza nuestra aplicación móvil.",
+    sections: [
+      { title: "1. Datos Recopilados", items: ["Información de la Cuenta: Dirección de correo electrónico y datos identificadores de sesión para el acceso seguro mediante enlace mágico (Magic Link).", "Fotos de Comidas: Imágenes capturadas con la cámara o seleccionadas de la galería por el usuario para el análisis y reconocimiento nutricional.", "Información Nutricional y Registros: Datos y cálculos generados a partir de las fotos procesadas, así como métricas introducidas voluntariamente por el usuario.", "Grabaciones de Audio: Archivos de voz capturados únicamente si el usuario utiliza funciones de entrada por dictado dentro de la aplicación.", "Diagnósticos y Rendimiento: Registros técnicos de fallos y métricas de rendimiento anónimas gestionadas con Firebase Crashlytics.", "Identificadores de Dispositivo: Identificadores técnicos de instalación para la administración de sesiones y notificaciones locales."] },
+      { title: "2. Uso de los Datos", items: ["Funcionalidad Principal: Proveer el escaneo de alimentos, cálculo de valores nutricionales y sincronización de registros personales.", "Autenticación y Seguridad: Validar el inicio de sesión mediante enlaces de verificación únicos.", "Mantenimiento y Estabilidad: Detectar y solucionar incidencias técnicas y bloqueos de la aplicación."] },
+      { title: "3. Proveedores de Servicios y Compartición de Datos", paragraphs: ["BananaSnap no comercializa ni vende datos personales a redes publicitarias o terceros. Utilizamos proveedores de infraestructura que procesan información bajo estrictos estándares de confidencialidad."], items: ["Supabase: Alojamiento de base de datos segura y gestión de autenticación.", "Google Firebase / Crashlytics: Monitoreo de estabilidad y análisis de fallos.", "Servicios de Procesamiento de IA: Análisis automatizado de imágenes para el reconocimiento nutricional."] },
+      { title: "4. Seguridad de los Datos", paragraphs: ["Todos los datos transmitidos entre la aplicación y nuestros servidores viajan cifrados mediante HTTPS/TLS. Aplicamos controles de acceso restringido contra accesos no autorizados o alteraciones."] },
+      { title: "5. Solicitud de Eliminación de Cuenta y Datos", paragraphs: ["Todo usuario puede solicitar la eliminación definitiva de su cuenta de BananaSnap y de todos los datos personales asociados."], subtitle: "Pasos para solicitar la eliminación", ordered: ["Por correo electrónico: Envíe una solicitud a bananasnapp@gmail.com con el asunto “Solicitud de eliminación de cuenta - BananaSnap” e indique el correo vinculado a su cuenta.", "Desde la aplicación: Ingrese a los ajustes de su perfil y seleccione la opción de solicitar baja de cuenta."], items: ["Se eliminan el identificador y correo del usuario, las fotos subidas y todo el historial nutricional.", "La eliminación se procesa de forma definitiva en un plazo no mayor a 30 días."] },
+      { title: "6. Menores de Edad", paragraphs: ["BananaSnap no recopila intencionalmente datos de menores de 13 años sin consentimiento de un progenitor o tutor legal. Si detectamos un registro sin autorización, se eliminará de inmediato."] },
+      { title: "7. Cambios en la Política", paragraphs: ["Podemos actualizar esta política para reflejar mejoras operativas o exigencias legales. Los cambios se publicarán en esta página con su fecha de actualización."] },
+      { title: "8. Contacto", paragraphs: ["Si tiene inquietudes sobre esta política o el tratamiento de su información, puede comunicarse con nosotros."] },
+    ], contactIntro: "Contacto",
+  },
+  en: {
+    title: "Privacy Policy — BananaSnap", pageTitle: "BananaSnap Privacy Policy", back: "Back to home", date: "Effective from: 08/30/2024 | Last updated: 2026", intro: "BananaSnap is committed to protecting its users' privacy. This Privacy Policy explains how we collect, use, store, and protect your information when you use our mobile application.",
+    sections: [
+      { title: "1. Data We Collect", items: ["Account Information: Email address and session identifiers for secure access through a magic link.", "Meal Photos: Images captured with the camera or selected from the gallery for nutritional analysis and recognition.", "Nutritional Information and Records: Data and calculations generated from processed photos, plus metrics voluntarily entered by the user.", "Audio Recordings: Voice files captured only when the user uses dictation features within the app.", "Diagnostics and Performance: Technical crash logs and anonymous performance metrics managed with Firebase Crashlytics.", "Device Identifiers: Technical installation identifiers used to manage sessions and local notifications."] },
+      { title: "2. How We Use Data", items: ["Core Features: Providing food scanning, nutritional calculations, and synchronization of personal records.", "Authentication and Security: Validating user sign-in through unique verification links.", "Maintenance and Stability: Detecting and resolving technical issues and app crashes."] },
+      { title: "3. Service Providers and Data Sharing", paragraphs: ["BananaSnap does not trade or sell personal data to advertising networks or third parties. We use infrastructure providers that process information under strict confidentiality standards."], items: ["Supabase: Secure database hosting and user authentication management.", "Google Firebase / Crashlytics: Stability monitoring and crash analysis.", "AI Processing Services: Automated image analysis for nutritional recognition."] },
+      { title: "4. Data Security", paragraphs: ["All data transmitted between the app and our servers is encrypted in transit using HTTPS/TLS. We apply restricted access controls to prevent unauthorized access or alteration."] },
+      { title: "5. Account and Data Deletion Requests", paragraphs: ["Every user has the right to request permanent deletion of their BananaSnap account and all associated personal data."], subtitle: "How to request deletion", ordered: ["By email: Send a request to bananasnapp@gmail.com with the subject “BananaSnap account deletion request” and include the email linked to your account.", "From the app: Open your profile settings and select the option to request account deletion."], items: ["Your user identifier, email, uploaded food photos, and full nutritional history will be deleted.", "Deletion is completed permanently within no more than 30 days."] },
+      { title: "6. Children", paragraphs: ["BananaSnap does not knowingly collect data from children under 13 without consent from a parent or legal guardian. If we detect an unauthorized account, it will be deleted immediately."] },
+      { title: "7. Changes to This Policy", paragraphs: ["We may update this policy to reflect operational improvements or legal requirements. Changes will be posted on this page with the latest update date."] },
+      { title: "8. Contact", paragraphs: ["If you have questions about this policy or how your information is handled, contact us."] },
+    ], contactIntro: "Contact",
+  },
+  it: {
+    title: "Informativa sulla Privacy — BananaSnap", pageTitle: "Informativa sulla Privacy di BananaSnap", back: "Torna alla home", date: "In vigore dal: 30/08/2024 | Ultimo aggiornamento: 2026", intro: "BananaSnap si impegna a proteggere la privacy dei suoi utenti. Questa Informativa descrive come raccogliamo, utilizziamo, conserviamo e proteggiamo le informazioni quando utilizzi la nostra applicazione mobile.",
+    sections: [
+      { title: "1. Dati Raccolti", items: ["Informazioni sull'Account: Indirizzo email e identificatori di sessione per l'accesso sicuro tramite magic link.", "Foto dei Pasti: Immagini scattate con la fotocamera o selezionate dalla galleria per l'analisi e il riconoscimento nutrizionale.", "Informazioni e Registri Nutrizionali: Dati e calcoli generati dalle foto elaborate e metriche inserite volontariamente dall'utente.", "Registrazioni Audio: File vocali acquisiti solo quando l'utente usa le funzioni di dettatura nell'app.", "Diagnostica e Prestazioni: Registri tecnici degli arresti anomali e metriche anonime gestite con Firebase Crashlytics.", "Identificatori del Dispositivo: Identificatori tecnici di installazione per gestire sessioni e notifiche locali."] },
+      { title: "2. Utilizzo dei Dati", items: ["Funzionalità Principali: Scansione degli alimenti, calcolo dei valori nutrizionali e sincronizzazione dei registri personali.", "Autenticazione e Sicurezza: Convalida dell'accesso tramite link di verifica univoci.", "Manutenzione e Stabilità: Rilevamento e risoluzione di problemi tecnici e arresti dell'app."] },
+      { title: "3. Fornitori di Servizi e Condivisione dei Dati", paragraphs: ["BananaSnap non commercializza né vende dati personali a reti pubblicitarie o terze parti. Utilizziamo fornitori che trattano le informazioni secondo rigorosi standard di riservatezza."], items: ["Supabase: Hosting sicuro del database e gestione dell'autenticazione.", "Google Firebase / Crashlytics: Monitoraggio della stabilità e analisi degli arresti anomali.", "Servizi di Elaborazione IA: Analisi automatizzata delle immagini per il riconoscimento nutrizionale."] },
+      { title: "4. Sicurezza dei Dati", paragraphs: ["Tutti i dati trasmessi tra l'app e i nostri server sono crittografati tramite HTTPS/TLS. Applichiamo controlli di accesso limitato contro accessi non autorizzati o alterazioni."] },
+      { title: "5. Richiesta di Eliminazione dell'Account e dei Dati", paragraphs: ["Ogni utente può richiedere l'eliminazione definitiva del proprio account BananaSnap e di tutti i dati personali associati."], subtitle: "Come richiedere l'eliminazione", ordered: ["Via email: Invia una richiesta a bananasnapp@gmail.com con oggetto “Richiesta di eliminazione account - BananaSnap” e indica l'email collegata all'account.", "Dall'app: Apri le impostazioni del profilo e seleziona l'opzione per richiedere l'eliminazione dell'account."], items: ["Saranno eliminati identificatore utente, email, foto caricate e tutta la cronologia nutrizionale.", "L'eliminazione definitiva avviene entro un massimo di 30 giorni."] },
+      { title: "6. Minori", paragraphs: ["BananaSnap non raccoglie consapevolmente dati di minori di 13 anni senza il consenso di un genitore o tutore legale. Un account non autorizzato sarà eliminato immediatamente."] },
+      { title: "7. Modifiche all'Informativa", paragraphs: ["Potremmo aggiornare questa informativa per riflettere miglioramenti operativi o requisiti legali. Le modifiche saranno pubblicate in questa pagina con la data di aggiornamento."] },
+      { title: "8. Contatti", paragraphs: ["Per domande su questa informativa o sul trattamento delle informazioni, contattaci."] },
+    ], contactIntro: "Contatti",
+  },
+};
+
+function PrivacyPage() {
+  const { language } = useLanguage();
+  const t = privacy[language];
+  useEffect(() => { document.title = t.title; }, [t.title]);
+  const goHome = (event: MouseEvent<HTMLAnchorElement>) => { event.preventDefault(); window.location.assign("/"); };
+  return <div className="min-h-screen bg-brand-soft"><header className="border-b border-border bg-background"><div className="mx-auto flex min-h-16 max-w-5xl items-center gap-4 px-6 py-2"><a href="/" onClick={goHome} className="text-xl font-black">BananaSnap</a><a href="/" onClick={goHome} className="ml-auto inline-flex items-center gap-2 text-sm font-extrabold text-primary"><ArrowLeft className="size-4" /> {t.back}</a><LanguageSelector /></div></header><main className="mx-auto max-w-4xl px-6 py-16"><div className="mb-12"><ShieldCheck className="size-10 text-primary" aria-hidden="true" /><h1 className="mt-5 text-4xl font-black sm:text-5xl">{t.pageTitle}</h1><p className="mt-4 font-bold text-primary">{t.date}</p><p className="mt-6 text-lg leading-8 text-ink-soft">{t.intro}</p></div><article className="space-y-10 rounded-md border border-border bg-background p-6 shadow-sm sm:p-10">{t.sections.map((section, sectionIndex) => <section key={section.title}><h2 className="text-2xl font-black text-foreground">{section.title}</h2>{section.paragraphs?.map(paragraph => <p key={paragraph} className="mt-4 leading-7 text-ink-soft">{paragraph}</p>)}{section.subtitle && <h3 className="mt-6 text-lg font-extrabold">{section.subtitle}</h3>}{section.ordered && <ol className="mt-3 list-decimal space-y-3 pl-5 leading-7 text-ink-soft">{section.ordered.map(item => <li key={item}>{item}</li>)}</ol>}{section.items && <ul className="mt-4 space-y-3 text-ink-soft">{section.items.map(item => <li key={item} className={sectionIndex < 3 ? "border-l-2 border-highlight pl-4 leading-7" : "leading-7"}>{item}</li>)}</ul>}{sectionIndex === 7 && <a href="mailto:bananasnapp@gmail.com" className="mt-4 inline-flex items-center gap-2 font-extrabold text-primary underline"><Mail className="size-5" /> bananasnapp@gmail.com</a>}</section>)}</article></main></div>;
+}
