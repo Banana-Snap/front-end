@@ -7,12 +7,11 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { ArrowLeft, Banana } from "lucide-react";
 import { LanguageSelector, useLanguage } from "../lib/language";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import sad_logo from '@/assets/sad_logo.svg';
 
 function NotFoundComponent() {
@@ -54,10 +53,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     en: ["This page didn't load", "Something went wrong. Try refreshing or return home.", "Try again", "Go home"],
     it: ["Questa pagina non si è caricata", "Qualcosa è andato storto. Prova ad aggiornare o torna alla home.", "Riprova", "Vai alla home"],
   }[language];
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
