@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import type { MouseEvent } from "react";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
 
-const OG_IMAGE = "https://id-preview--8ece6bab-cb16-4d9b-a88e-83472da11663.lovable.app/og-image.jpg";
+const OG_IMAGE = "https://bananasnap.com.ar/og-image.jpg";
 
 export const Route = createFileRoute("/privacidad")({
   component: PrivacyPage,
