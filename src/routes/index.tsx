@@ -10,11 +10,11 @@ import logoApple from "@/assets/logoapple.png";
 import instagram_logo from "@/assets/instagram_logo.png";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
 import { useSession } from "@/lib/auth";
+import { OG_IMAGE, SITE_URL } from "@/lib/site";
 
 const GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.cipherchabon.banana_app&pcampaignid=web_share";
 
 const APPLE = "https://apple.bananasnap.ar/";
-const OG_IMAGE = "https://bananasnap.com.ar/og-image.jpg";
 
 
 export const Route = createFileRoute("/")({
@@ -26,12 +26,12 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "BananaSnap — Tu nutrición, en una foto" },
       { property: "og:description", content: "Escaneá tus comidas, conocé sus nutrientes y tomá mejores decisiones cada día." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:image", content: OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
   }),
 });
 

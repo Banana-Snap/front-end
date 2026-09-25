@@ -1,10 +1,12 @@
 # BananaSnap
 
+> App móvil de nutrición que reconoce comidas a partir de una foto y estima sus nutrientes.
+
 BananaSnap es una aplicación móvil de nutrición que reconoce alimentos mediante inteligencia artificial y presenta estimaciones nutricionales.
 
 ## Páginas públicas
-- / — Información principal, características y enlaces oficiales de descarga.
-- /privacidad — Política de privacidad, tratamiento de datos y eliminación de cuenta.
+- [Inicio](https://www.bananasnap.ar/): Información principal, características y enlaces oficiales de descarga.
+- [Política de privacidad](https://www.bananasnap.ar/privacidad): Política de privacidad, tratamiento de datos y eliminación de cuenta.
 
 ## Enlaces oficiales
 - Google Play: https://play.google.com/store/apps/details?id=com.cipherchabon.banana_app&pcampaignid=web_share

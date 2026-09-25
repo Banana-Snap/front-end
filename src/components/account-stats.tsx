@@ -51,6 +51,11 @@ const copy = {
     week: "Semana",
     month: "Mes",
     weekdays: ["D", "L", "M", "M", "J", "V", "S"],
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+    period: "Período",
+    nutrient: "Nutriente",
+    loading: "Cargando…",
   },
   en: {
     frequency: "Registration Frequency",
@@ -64,6 +69,11 @@ const copy = {
     week: "Week",
     month: "Month",
     weekdays: ["S", "M", "T", "W", "T", "F", "S"],
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+    period: "Period",
+    nutrient: "Nutrient",
+    loading: "Loading…",
   },
   it: {
     frequency: "Frequenza di registrazione",
@@ -77,6 +87,11 @@ const copy = {
     week: "Settimana",
     month: "Mese",
     weekdays: ["D", "L", "M", "M", "G", "V", "S"],
+    prevMonth: "Mese precedente",
+    nextMonth: "Mese successivo",
+    period: "Periodo",
+    nutrient: "Nutriente",
+    loading: "Caricamento…",
   },
 } satisfies Record<Language, unknown>;
 
@@ -143,10 +158,17 @@ export function AccountStats({
   );
 }
 
-function Spinner() {
+function Spinner({ label }: { label: string }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <div className="size-7 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    <div
+      role="status"
+      className="absolute inset-0 flex items-center justify-center"
+    >
+      <div
+        className="size-7 animate-spin rounded-full border-2 border-muted border-t-primary"
+        aria-hidden="true"
+      />
+      <span className="sr-only">{label}</span>
     </div>
   );
 }
@@ -208,6 +230,7 @@ function FrequencyCalendar({
     month: "long",
     year: "numeric",
   }).format(month);
+  const longDate = new Intl.DateTimeFormat(language, { dateStyle: "long" });
 
   return (
     <section className="flex h-full flex-col rounded-md border border-border bg-card p-5 shadow-lg">
@@ -219,19 +242,22 @@ function FrequencyCalendar({
           <button
             type="button"
             onClick={() => onChangeMonth(-1)}
-            aria-label="‹"
+            aria-label={t.prevMonth}
             className="rounded-md p-1 text-foreground hover:bg-accent"
           >
             <ChevronLeft className="size-5" aria-hidden="true" />
           </button>
-          <span className="w-28 text-center text-xs capitalize text-muted-foreground">
+          <span
+            aria-live="polite"
+            className="w-28 text-center text-xs capitalize text-muted-foreground"
+          >
             {monthLabel}
           </span>
           <button
             type="button"
             onClick={() => onChangeMonth(1)}
             disabled={isCurrentMonth}
-            aria-label="›"
+            aria-label={t.nextMonth}
             className="rounded-md p-1 text-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ChevronRight className="size-5" aria-hidden="true" />
@@ -239,16 +265,26 @@ function FrequencyCalendar({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-7 text-center text-xs text-muted-foreground">
+      <div
+        aria-hidden="true"
+        className="mt-3 grid grid-cols-7 text-center text-xs text-muted-foreground"
+      >
         {t.weekdays.map((label, i) => (
           <span key={i}>{label}</span>
         ))}
       </div>
-      <div className="mt-2 grid grid-cols-7 gap-y-2">
+      <div
+        role="group"
+        aria-label={monthLabel}
+        aria-busy={loading}
+        className="mt-2 grid grid-cols-7 gap-y-2"
+      >
         {Array.from({ length: CALENDAR_CELLS }, (_, i) => {
           const day = i - firstWeekday + 1;
           if (day < 1 || day > daysInMonth) {
-            return <span key={`empty-${i}`} className="h-8" />;
+            return (
+              <span key={`empty-${i}`} aria-hidden="true" className="h-8" />
+            );
           }
           const date = new Date(month.getFullYear(), month.getMonth(), day);
           if (isAfter(date, today)) {
@@ -265,18 +301,23 @@ function FrequencyCalendar({
             return (
               <span
                 key={day}
+                aria-hidden="true"
                 className="size-8 animate-pulse justify-self-center rounded-full bg-muted"
               />
             );
           }
           const count = counts[day] ?? 0;
           const color = count >= 4 ? PRIMARY : count >= 1 ? PARTIAL : NO_RECORD;
+          const status =
+            count >= 4 ? t.complete : count >= 1 ? t.partial : t.none;
           const selected = isSameDay(date, selectedDay);
           return (
             <button
               key={day}
               type="button"
               onClick={() => onSelectDay(date)}
+              aria-label={`${longDate.format(date)}: ${status}`}
+              aria-pressed={selected}
               style={{ backgroundColor: color }}
               className={`flex size-8 items-center justify-center justify-self-center rounded-full text-xs font-bold text-white ${selected ? "ring-2 ring-foreground ring-offset-1 ring-offset-card" : ""}`}
             >
@@ -293,6 +334,7 @@ function FrequencyCalendar({
         ].map(([color, label]) => (
           <span key={label} className="flex items-center gap-1.5">
             <span
+              aria-hidden="true"
               className="size-3 rounded-full"
               style={{ backgroundColor: color }}
             />
@@ -458,12 +500,17 @@ function TrendChart({
         {nutrientLabels[language][nutrient]} ({unit}) vs. {chart.range}
       </p>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div
+        role="group"
+        aria-label={t.period}
+        className="mt-4 grid grid-cols-3 gap-2"
+      >
         {(["day", "week", "month"] as const).map((p) => (
           <button
             key={p}
             type="button"
             onClick={() => setPeriod(p)}
+            aria-pressed={period === p}
             className={`rounded-md border py-2 text-xs font-bold ${period === p ? "border-transparent text-white" : "border-border bg-background text-muted-foreground hover:bg-accent"}`}
             style={period === p ? { backgroundColor: PRIMARY } : undefined}
           >
@@ -472,6 +519,7 @@ function TrendChart({
         ))}
       </div>
       <select
+        aria-label={t.nutrient}
         value={nutrient}
         onChange={(e) => setNutrient(e.target.value as Nutrient)}
         className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -485,72 +533,94 @@ function TrendChart({
 
       <div className="relative mt-4 min-h-48 flex-1">
         {loading ? (
-          <Spinner />
+          <Spinner label={t.loading} />
         ) : chart.points.length === 0 ? (
           <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             {t.noData}
           </p>
         ) : (
-          <div className="absolute inset-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={chart.points}
-                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="4 4"
-                  className="stroke-border"
-                />
-                <XAxis
-                  dataKey="x"
-                  type="number"
-                  domain={[chart.minX, chart.maxX]}
-                  tickFormatter={chart.xLabel}
-                  allowDecimals={false}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 10 }}
-                  className="fill-muted-foreground"
-                />
-                <YAxis
-                  domain={[0, maxY]}
-                  tickFormatter={(v: number) => `${Math.round(v)}${unit}`}
-                  width={48}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 10 }}
-                  className="fill-muted-foreground"
-                />
-                <Tooltip
-                  formatter={(value: number) => [
-                    `${Math.round(value)}${unit}`,
-                    nutrientLabels[language][nutrient],
-                  ]}
-                  labelFormatter={(x: number) => chart.xLabel(x)}
-                />
-                <Area
-                  type={period === "day" ? "linear" : "monotone"}
-                  dataKey="y"
-                  stroke={PRIMARY}
-                  strokeWidth={2}
-                  fill={PRIMARY}
-                  fillOpacity={0.15}
-                  isAnimationActive={false}
-                  dot={
-                    period === "day"
-                      ? false
-                      : {
-                          r: 3,
-                          stroke: PRIMARY,
-                          strokeWidth: 2,
-                          fill: "var(--card)",
-                        }
-                  }
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <>
+            <table className="sr-only">
+              <caption>
+                {t.trend}: {nutrientLabels[language][nutrient]} ({unit}),{" "}
+                {chart.range}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">{t[period]}</th>
+                  <th scope="col">{nutrientLabels[language][nutrient]}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chart.points.map((point, i) => (
+                  <tr key={i}>
+                    <td>{chart.xLabel(point.x)}</td>
+                    <td>{`${Math.round(point.y)}${unit}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div aria-hidden="true" className="absolute inset-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chart.points}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="4 4"
+                    className="stroke-border"
+                  />
+                  <XAxis
+                    dataKey="x"
+                    type="number"
+                    domain={[chart.minX, chart.maxX]}
+                    tickFormatter={chart.xLabel}
+                    allowDecimals={false}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 10 }}
+                    className="fill-muted-foreground"
+                  />
+                  <YAxis
+                    domain={[0, maxY]}
+                    tickFormatter={(v: number) => `${Math.round(v)}${unit}`}
+                    width={48}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 10 }}
+                    className="fill-muted-foreground"
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      `${Math.round(value)}${unit}`,
+                      nutrientLabels[language][nutrient],
+                    ]}
+                    labelFormatter={(x: number) => chart.xLabel(x)}
+                  />
+                  <Area
+                    type={period === "day" ? "linear" : "monotone"}
+                    dataKey="y"
+                    stroke={PRIMARY}
+                    strokeWidth={2}
+                    fill={PRIMARY}
+                    fillOpacity={0.15}
+                    isAnimationActive={false}
+                    dot={
+                      period === "day"
+                        ? false
+                        : {
+                            r: 3,
+                            stroke: PRIMARY,
+                            strokeWidth: 2,
+                            fill: "var(--card)",
+                          }
+                    }
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </>
         )}
       </div>
     </section>

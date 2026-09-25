@@ -4,6 +4,7 @@ import { Loader2, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import instagram_logo from "@/assets/instagram_logo.png";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
+import { SITE_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/auth")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "/auth" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/auth` }],
   }),
 });
 

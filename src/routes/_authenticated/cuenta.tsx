@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { LogOut, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import instagram_logo from "@/assets/instagram_logo.png";
@@ -54,7 +54,8 @@ function AccountPage() {
       console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB", user);
     })();
   }, []);
-  const handleSave = async () => {
+  const handleSave = async (event: FormEvent) => {
+    event.preventDefault();
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -84,7 +85,7 @@ function AccountPage() {
         <h1 className="mt-5 text-3xl font-black text-foreground">{t.title}{displayName ? `, ${displayName}` : ""}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
 
-        <div className="mt-7 space-y-4">
+        <form onSubmit={handleSave} className="mt-7 space-y-4">
           <div>
             <label htmlFor="account-name" className="text-sm font-bold text-foreground">{t.name}</label>
             <input id="account-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
@@ -95,9 +96,9 @@ function AccountPage() {
             <input id="account-email" value={email} readOnly
               className="mt-1.5 w-full rounded-md border border-input bg-muted px-3 py-2.5 text-sm text-muted-foreground" />
           </div>
-          {error && <p className="text-sm font-bold text-destructive">{error}</p>}
-          {notice && <p className="text-sm font-bold text-primary">{notice}</p>}
-          <button type="button" onClick={handleSave} disabled={busy}
+          {error && <p role="alert" className="text-sm font-bold text-destructive">{error}</p>}
+          {notice && <p role="status" className="text-sm font-bold text-primary">{notice}</p>}
+          <button type="submit" disabled={busy}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-extrabold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
             <Save className="size-4" aria-hidden="true" /> {t.save}
           </button>
@@ -105,9 +106,8 @@ function AccountPage() {
             className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground hover:bg-accent">
             <LogOut className="size-4" aria-hidden="true" /> {t.signout}
           </button>
-          <a href="/" onClick={(e) => { e.preventDefault(); window.location.assign("/"); }}
-            className="block text-center text-sm text-muted-foreground hover:text-primary">{t.home}</a>
-        </div>
+          <a href="/" className="block text-center text-sm text-muted-foreground hover:text-primary">{t.home}</a>
+        </form>
       </div>
       {userId && <AccountStats userId={userId} language={language} />}
       </div>

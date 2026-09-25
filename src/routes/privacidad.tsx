@@ -3,8 +3,7 @@ import { ArrowLeft, Mail, ShieldCheck } from "lucide-react";
 import { useEffect } from "react";
 import type { MouseEvent } from "react";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
-
-const OG_IMAGE = "https://bananasnap.com.ar/og-image.jpg";
+import { OG_IMAGE, SITE_URL } from "@/lib/site";
 
 export const Route = createFileRoute("/privacidad")({
   component: PrivacyPage,
@@ -14,10 +13,10 @@ export const Route = createFileRoute("/privacidad")({
       { name: "description", content: "Conocé cómo BananaSnap recopila, utiliza, almacena y protege tu información personal." },
       { property: "og:title", content: "Política de Privacidad — BananaSnap" },
       { property: "og:description", content: "Información sobre privacidad, seguridad y eliminación de datos en BananaSnap." },
-      { property: "og:type", content: "article" }, { property: "og:url", content: "/privacidad" },
+      { property: "og:type", content: "article" }, { property: "og:url", content: `${SITE_URL}/privacidad` },
       { property: "og:image", content: OG_IMAGE }, { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:image", content: OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "/privacidad" }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/privacidad` }],
   }),
 });
 
