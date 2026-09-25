@@ -4,6 +4,7 @@ import { LogOut, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import instagram_logo from "@/assets/instagram_logo.png";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
+import { AccountStats } from "@/components/account-stats";
 
 export const Route = createFileRoute("/_authenticated/cuenta")({
   component: AccountPage,
@@ -30,6 +31,7 @@ function AccountPage() {
   const { language } = useLanguage();
   const t = copy[language];
   useEffect(() => { document.title = t.docTitle; }, [t.docTitle]);
+  const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,22 +42,29 @@ function AccountPage() {
     void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setEmail(user.email ?? "");
-      const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
-      setDisplayName(profile?.display_name ?? "");
+      setUserId(user.id);
+      const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("email, full_name, first_name, last_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profileError) setError(profileError.message);
+      setEmail(profile?.email ?? user.email ?? "");
+      setDisplayName(profile?.full_name ?? [profile?.first_name, profile?.last_name].filter(Boolean).join(" "));
+      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB", user);
     })();
   }, []);
-
   const handleSave = async () => {
     setBusy(true);
     setError(null);
     setNotice(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error: upsertError } = await supabase
-        .from("profiles")
-        .upsert({ id: user.id, display_name: displayName }, { onConflict: "id" });
-      if (upsertError) setError(upsertError.message);
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ full_name: displayName, updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (updateError) setError(updateError.message);
       else setNotice(t.saved);
     }
     setBusy(false);
@@ -69,6 +78,7 @@ function AccountPage() {
   return (
     <main className="relative min-h-screen bg-brand-soft px-6 py-16">
       <LanguageSelector className="absolute right-6 top-6" />
+      <div className="mx-auto w-full max-w-4xl space-y-4">
       <div className="mx-auto w-full max-w-md rounded-md border border-border bg-card p-8 shadow-lg">
         <img src={instagram_logo} alt="" aria-hidden="true" className="size-12 rounded-xl" />
         <h1 className="mt-5 text-3xl font-black text-foreground">{t.title}{displayName ? `, ${displayName}` : ""}</h1>
@@ -98,6 +108,8 @@ function AccountPage() {
           <a href="/" onClick={(e) => { e.preventDefault(); window.location.assign("/"); }}
             className="block text-center text-sm text-muted-foreground hover:text-primary">{t.home}</a>
         </div>
+      </div>
+      {userId && <AccountStats userId={userId} language={language} />}
       </div>
     </main>
   );

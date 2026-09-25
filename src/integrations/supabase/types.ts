@@ -14,27 +14,171 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      foods: {
         Row: {
-          avatar_url: string | null
           created_at: string
-          display_name: string | null
+          foods: Json
           id: string
+          image_url: string | null
+          is_edited: boolean
+          is_manual: boolean
+          prompt_version: string | null
+          servings: number
+          title: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string
-          display_name?: string | null
-          id: string
+          foods: Json
+          id?: string
+          image_url?: string | null
+          is_edited?: boolean
+          is_manual?: boolean
+          prompt_version?: string | null
+          servings?: number
+          title?: string | null
           updated_at?: string
+          user_id: string
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string
-          display_name?: string | null
+          foods?: Json
           id?: string
+          image_url?: string | null
+          is_edited?: boolean
+          is_manual?: boolean
+          prompt_version?: string | null
+          servings?: number
+          title?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          activity_level: string | null
+          afternoon_snack_time: string | null
+          avatar_url: string | null
+          birth_date: string | null
+          breakfast_time: string | null
+          calories_consumed: number
+          country: string | null
+          created_at: string
+          daily_calories_goal: number | null
+          daily_carbs_goal_g: number | null
+          daily_fats_goal_g: number | null
+          daily_fiber_goal_g: number | null
+          daily_protein_goal_g: number | null
+          daily_sodium_goal_mg: number | null
+          daily_water_goal_g: number | null
+          dietary_restrictions: string[] | null
+          dinner_time: string | null
+          email: string
+          first_name: string | null
+          full_name: string | null
+          gender: string | null
+          goal: string | null
+          health_conditions: string[] | null
+          height_cm: number | null
+          id: string
+          last_name: string | null
+          lunch_time: string | null
+          medication: string | null
+          migrated_from_local: boolean
+          migration_date: string | null
+          onboarding_completed: boolean
+          other_dietary_restrictions: string | null
+          reproductive_status: string | null
+          role: string
+          snack_time: string | null
+          state: string | null
+          updated_at: string
+          water_intake: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          afternoon_snack_time?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          breakfast_time?: string | null
+          calories_consumed?: number
+          country?: string | null
+          created_at?: string
+          daily_calories_goal?: number | null
+          daily_carbs_goal_g?: number | null
+          daily_fats_goal_g?: number | null
+          daily_fiber_goal_g?: number | null
+          daily_protein_goal_g?: number | null
+          daily_sodium_goal_mg?: number | null
+          daily_water_goal_g?: number | null
+          dietary_restrictions?: string[] | null
+          dinner_time?: string | null
+          email: string
+          first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
+          goal?: string | null
+          health_conditions?: string[] | null
+          height_cm?: number | null
+          id: string
+          last_name?: string | null
+          lunch_time?: string | null
+          medication?: string | null
+          migrated_from_local?: boolean
+          migration_date?: string | null
+          onboarding_completed?: boolean
+          other_dietary_restrictions?: string | null
+          reproductive_status?: string | null
+          role?: string
+          snack_time?: string | null
+          state?: string | null
+          updated_at?: string
+          water_intake?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          afternoon_snack_time?: string | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          breakfast_time?: string | null
+          calories_consumed?: number
+          country?: string | null
+          created_at?: string
+          daily_calories_goal?: number | null
+          daily_carbs_goal_g?: number | null
+          daily_fats_goal_g?: number | null
+          daily_fiber_goal_g?: number | null
+          daily_protein_goal_g?: number | null
+          daily_sodium_goal_mg?: number | null
+          daily_water_goal_g?: number | null
+          dietary_restrictions?: string[] | null
+          dinner_time?: string | null
+          email?: string
+          first_name?: string | null
+          full_name?: string | null
+          gender?: string | null
+          goal?: string | null
+          health_conditions?: string[] | null
+          height_cm?: number | null
+          id?: string
+          last_name?: string | null
+          lunch_time?: string | null
+          medication?: string | null
+          migrated_from_local?: boolean
+          migration_date?: string | null
+          onboarding_completed?: boolean
+          other_dietary_restrictions?: string | null
+          reproductive_status?: string | null
+          role?: string
+          snack_time?: string | null
+          state?: string | null
+          updated_at?: string
+          water_intake?: number | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
