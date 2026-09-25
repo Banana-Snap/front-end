@@ -21,14 +21,15 @@ export const Route = createFileRoute("/_authenticated/cuenta")({
 });
 
 const copy = {
-  es: { title: "Hola", subtitle: "Esta es tu cuenta de BananaSnap.", name: "Tu nombre", email: "Correo", save: "Guardar", saved: "Cambios guardados.", signout: "Cerrar sesión", home: "Volver al inicio" },
-  en: { title: "Hi", subtitle: "This is your BananaSnap account.", name: "Your name", email: "Email", save: "Save", saved: "Changes saved.", signout: "Sign out", home: "Back to home" },
-  it: { title: "Ciao", subtitle: "Questo è il tuo account BananaSnap.", name: "Il tuo nome", email: "Email", save: "Salva", saved: "Modifiche salvate.", signout: "Esci", home: "Torna alla home" },
+  es: { docTitle: "Mi cuenta — BananaSnap", title: "Hola", subtitle: "Esta es tu cuenta de BananaSnap.", name: "Tu nombre", email: "Correo", save: "Guardar", saved: "Cambios guardados.", signout: "Cerrar sesión", home: "Volver al inicio" },
+  en: { docTitle: "My account — BananaSnap", title: "Hi", subtitle: "This is your BananaSnap account.", name: "Your name", email: "Email", save: "Save", saved: "Changes saved.", signout: "Sign out", home: "Back to home" },
+  it: { docTitle: "Il mio account — BananaSnap", title: "Ciao", subtitle: "Questo è il tuo account BananaSnap.", name: "Il tuo nome", email: "Email", save: "Salva", saved: "Modifiche salvate.", signout: "Esci", home: "Torna alla home" },
 } satisfies Record<Language, Record<string, string>>;
 
 function AccountPage() {
   const { language } = useLanguage();
   const t = copy[language];
+  useEffect(() => { document.title = t.docTitle; }, [t.docTitle]);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);

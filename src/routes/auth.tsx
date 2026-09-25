@@ -23,6 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 const copy = {
   es: {
+    docTitle: "Iniciar sesión — BananaSnap",
     title: "Iniciá sesión",
     subtitle: "Escribí tu correo y te enviamos un enlace para entrar. Es la misma cuenta que usás en la app.",
     email: "Correo electrónico",
@@ -33,6 +34,7 @@ const copy = {
     loading: "Enviando…",
   },
   en: {
+    docTitle: "Sign in — BananaSnap",
     title: "Sign in",
     subtitle: "Enter your email and we'll send you a sign-in link. It's the same account you use in the app.",
     email: "Email",
@@ -43,6 +45,7 @@ const copy = {
     loading: "Sending…",
   },
   it: {
+    docTitle: "Accedi — BananaSnap",
     title: "Accedi",
     subtitle: "Inserisci la tua email e ti invieremo un link per accedere. È lo stesso account dell'app.",
     email: "Email",
@@ -57,6 +60,7 @@ const copy = {
 function AuthPage() {
   const { language } = useLanguage();
   const t = copy[language];
+  useEffect(() => { document.title = t.docTitle; }, [t.docTitle]);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
