@@ -67,8 +67,8 @@ const copy = {
 
 const icons = [ScanLine, ChartNoAxesCombined, HeartPulse];
 
-function Brand() {
-  return <span className="inline-flex items-center gap-2 text-xl font-black text-foreground"><img src={instagram_logo} alt="" className="size-9 rounded-md" aria-hidden="true" />BananaSnap</span>;
+function Brand({ compact = false }: { compact?: boolean }) {
+  return <span className="inline-flex items-center gap-2 text-xl font-black text-foreground"><img src={instagram_logo} alt="" className="size-9 shrink-0 rounded-md" aria-hidden="true" /><span className={compact ? "hidden sm:inline" : undefined}>BananaSnap</span></span>;
 }
 
 function AppScreenshot({ src, alt }: { src: string; alt: string }) {
@@ -98,7 +98,7 @@ function AuthLink({ language }: { language: Language }) {
     <a
       href={href}
       onClick={(event) => { event.preventDefault(); window.location.assign(href); }}
-      className="rounded-md border border-border px-3 py-2 text-sm font-extrabold text-foreground transition-colors hover:border-primary hover:text-primary"
+      className="whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm font-extrabold text-foreground transition-colors hover:border-primary hover:text-primary"
     >
       {label}
     </a>
@@ -114,7 +114,7 @@ function Index() {
   const alts = t.alts as string[];
 
   return <div className="min-h-screen bg-background">
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur"><div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-6"><a href="#inicio" aria-label="BananaSnap"><Brand /></a><nav className="ml-auto hidden items-center gap-7 text-sm font-bold text-ink-soft md:flex" aria-label="Navigation"><a href="#caracteristicas" className="hover:text-primary">{nav[0]}</a><a href="#descargar" className="hover:text-primary">{nav[1]}</a><a href="#porque" className="hover:text-primary">{nav[2]}</a><a href="mailto:bananasnapp@gmail.com" className="hover:text-primary">{nav[3]}</a></nav><a href="#descargar" className="ml-auto rounded-md bg-highlight px-3 py-2 text-sm font-black text-highlight-foreground hover:bg-highlight/85 md:hidden">{t.download as string}</a><AuthLink language={language} /><LanguageSelector /></div></header>
+    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur"><div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:gap-4 sm:px-6"><a href="#inicio" aria-label="BananaSnap" className="shrink-0"><Brand compact /></a><nav className="ml-auto hidden items-center gap-7 text-sm font-bold text-ink-soft md:flex" aria-label="Navigation"><a href="#caracteristicas" className="hover:text-primary">{nav[0]}</a><a href="#descargar" className="hover:text-primary">{nav[1]}</a><a href="#porque" className="hover:text-primary">{nav[2]}</a><a href="mailto:bananasnapp@gmail.com" className="hover:text-primary">{nav[3]}</a></nav><a href="#descargar" className="ml-auto whitespace-nowrap rounded-md bg-highlight px-3 py-2 text-sm font-black text-highlight-foreground hover:bg-highlight/85 md:hidden">{t.download as string}</a><AuthLink language={language} /><LanguageSelector /></div></header>
     <main>
       <section id="inicio" className="overflow-hidden bg-brand-soft"><div className="mx-auto grid min-h-[690px] max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.02fr_.98fr] lg:py-20"><div><p className="mb-4 inline-flex items-center gap-2 text-sm font-extrabold uppercase text-primary"><Leaf className="size-4" aria-hidden="true" /> {t.eyebrow as string}</p><h1 className="max-w-3xl text-5xl font-black leading-[1.03] text-foreground sm:text-6xl">{t.hero1 as string}<br /><span className="text-primary">{t.hero2 as string}</span></h1><p className="mt-6 max-w-xl text-lg leading-8 text-ink-soft">{t.heroText as string}</p><div className="mt-8"><StoreLinks language={language} /></div></div><div className="grid grid-cols-3 items-end gap-3 sm:gap-5"><AppScreenshot src={escaneocomida} alt={alts[0] ?? "BananaSnap"} /><AppScreenshot src={pantallaprincipal} alt={alts[1] ?? "BananaSnap"} /><AppScreenshot src={estadisticas} alt={alts[2] ?? "BananaSnap"} /></div></div></section>
       <section id="caracteristicas" className="bg-brand-soft-strong py-24"><div className="mx-auto max-w-6xl px-6"><div className="mx-auto max-w-2xl text-center"><p className="text-sm font-extrabold uppercase text-primary">{t.featureEyebrow as string}</p><h2 className="mt-3 text-3xl font-black sm:text-4xl">{t.featureTitle as string}</h2><p className="mt-4 text-muted-foreground">{t.featureText as string}</p></div><div className="mt-12 grid gap-5 md:grid-cols-3">{features.map(([title, text], index) => { const Icon = icons[index] ?? ScanLine; return <article key={title} className="rounded-md border border-border bg-card p-7 shadow-sm"><span className="flex size-11 items-center justify-center rounded-md bg-highlight text-highlight-foreground"><Icon className="size-5" aria-hidden="true" /></span><h3 className="mt-5 text-xl font-extrabold text-primary">{title}</h3><p className="mt-3 leading-7 text-muted-foreground">{text}</p></article>; })}</div></div></section>
