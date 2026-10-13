@@ -34,6 +34,8 @@ function AccountPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
+  // Name shown in the greeting: only changes once it is saved, not while typing.
+  const [savedName, setSavedName] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +52,9 @@ function AccountPage() {
         .maybeSingle();
       if (profileError) setError(profileError.message);
       setEmail(profile?.email ?? user.email ?? "");
-      setDisplayName(profile?.full_name ?? [profile?.first_name, profile?.last_name].filter(Boolean).join(" "));
-      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB", user);
+      const name = profile?.full_name ?? [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+      setDisplayName(name);
+      setSavedName(name);
     })();
   }, []);
   const handleSave = async (event: FormEvent) => {
@@ -66,7 +69,10 @@ function AccountPage() {
         .update({ full_name: displayName, updated_at: new Date().toISOString() })
         .eq("id", user.id);
       if (updateError) setError(updateError.message);
-      else setNotice(t.saved);
+      else {
+        setSavedName(displayName);
+        setNotice(t.saved);
+      }
     }
     setBusy(false);
   };
@@ -82,7 +88,7 @@ function AccountPage() {
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <div className="mx-auto w-full max-w-md rounded-md border border-border bg-card p-8 shadow-lg">
           <img src={instagram_logo} alt="" aria-hidden="true" className="size-12 rounded-xl" />
-          <h1 className="mt-5 text-3xl font-black text-foreground">{t.title}{displayName ? `, ${displayName}` : ""}</h1>
+          <h1 className="mt-5 text-3xl font-black text-foreground">{t.title}{savedName ? `, ${savedName}` : ""}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
 
           <form onSubmit={handleSave} className="mt-7 space-y-4">
