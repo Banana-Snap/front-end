@@ -3,6 +3,7 @@ import {
   addDays,
   addMonths,
   isAfter,
+  isBefore,
   isSameDay,
   isSameMonth,
   startOfDay,
@@ -110,6 +111,19 @@ async function fetchFoods(
   return data ?? [];
 }
 
+// Day of the user's first record, or null if they have none yet.
+async function fetchFirstRecordDay(userId: string): Promise<Date | null> {
+  const { data, error } = await supabase
+    .from("foods")
+    .select("created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? startOfDay(new Date(data.created_at)) : null;
+}
+
 export function AccountStats({
   userId,
   language,
@@ -120,6 +134,20 @@ export function AccountStats({
   const today = startOfDay(new Date());
   const [month, setMonth] = useState(startOfMonth(today));
   const [selectedDay, setSelectedDay] = useState(today);
+  // undefined = not loaded (or the query failed): show the full calendar.
+  const [firstRecordDay, setFirstRecordDay] = useState<Date | null>();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFirstRecordDay(userId)
+      .then((day) => {
+        if (!cancelled) setFirstRecordDay(day);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const changeMonth = (delta: number) => {
     const next = addMonths(month, delta);
@@ -145,6 +173,7 @@ export function AccountStats({
         language={language}
         month={month}
         selectedDay={selectedDay}
+        firstRecordDay={firstRecordDay}
         onChangeMonth={changeMonth}
         onSelectDay={setSelectedDay}
       />
@@ -181,6 +210,7 @@ function FrequencyCalendar({
   language,
   month,
   selectedDay,
+  firstRecordDay,
   onChangeMonth,
   onSelectDay,
 }: {
@@ -188,6 +218,7 @@ function FrequencyCalendar({
   language: Language;
   month: Date;
   selectedDay: Date;
+  firstRecordDay: Date | null | undefined;
   onChangeMonth: (delta: number) => void;
   onSelectDay: (day: Date) => void;
 }) {
@@ -196,6 +227,13 @@ function FrequencyCalendar({
   const [loading, setLoading] = useState(true);
   const today = startOfDay(new Date());
   const isCurrentMonth = isSameMonth(month, today);
+  // Days before the first record aren't "missed": the user wasn't using the app yet.
+  const isBeforeFirstRecord = (date: Date) =>
+    firstRecordDay !== undefined &&
+    (firstRecordDay === null || isBefore(date, firstRecordDay));
+  const canGoBack =
+    firstRecordDay === undefined ||
+    (firstRecordDay !== null && isAfter(month, startOfMonth(firstRecordDay)));
 
   useEffect(() => {
     let cancelled = false;
@@ -242,8 +280,9 @@ function FrequencyCalendar({
           <button
             type="button"
             onClick={() => onChangeMonth(-1)}
+            disabled={!canGoBack}
             aria-label={t.prevMonth}
-            className="rounded-md p-1 text-foreground hover:bg-accent"
+            className="rounded-md p-1 text-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ChevronLeft className="size-5" aria-hidden="true" />
           </button>
@@ -287,7 +326,7 @@ function FrequencyCalendar({
             );
           }
           const date = new Date(month.getFullYear(), month.getMonth(), day);
-          if (isAfter(date, today)) {
+          if (isAfter(date, today) || isBeforeFirstRecord(date)) {
             return (
               <span
                 key={day}
