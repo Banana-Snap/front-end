@@ -22,10 +22,14 @@ export const Route = createFileRoute("/_authenticated/cuenta")({
 });
 
 const copy = {
-  es: { docTitle: "Mi cuenta — BananaSnap", title: "Hola", subtitle: "Esta es tu cuenta de BananaSnap.", name: "Tu nombre", email: "Correo", save: "Guardar", saved: "Cambios guardados.", signout: "Cerrar sesión", home: "Volver al inicio" },
-  en: { docTitle: "My account — BananaSnap", title: "Hi", subtitle: "This is your BananaSnap account.", name: "Your name", email: "Email", save: "Save", saved: "Changes saved.", signout: "Sign out", home: "Back to home" },
-  it: { docTitle: "Il mio account — BananaSnap", title: "Ciao", subtitle: "Questo è il tuo account BananaSnap.", name: "Il tuo nome", email: "Email", save: "Salva", saved: "Modifiche salvate.", signout: "Esci", home: "Torna alla home" },
+  es: { docTitle: "Mi cuenta — BananaSnap", title: "Hola", subtitle: "Esta es tu cuenta de BananaSnap.", firstName: "Nombre", lastName: "Apellido", email: "Correo", save: "Guardar", saved: "Cambios guardados.", signout: "Cerrar sesión", home: "Volver al inicio" },
+  en: { docTitle: "My account — BananaSnap", title: "Hi", subtitle: "This is your BananaSnap account.", firstName: "First name", lastName: "Last name", email: "Email", save: "Save", saved: "Changes saved.", signout: "Sign out", home: "Back to home" },
+  it: { docTitle: "Il mio account — BananaSnap", title: "Ciao", subtitle: "Questo è il tuo account BananaSnap.", firstName: "Nome", lastName: "Cognome", email: "Email", save: "Salva", saved: "Modifiche salvate.", signout: "Esci", home: "Torna alla home" },
 } satisfies Record<Language, Record<string, string>>;
+
+function joinName(first?: string | null, last?: string | null) {
+  return [first?.trim(), last?.trim()].filter(Boolean).join(" ");
+}
 
 function AccountPage() {
   const { language } = useLanguage();
@@ -33,7 +37,10 @@ function AccountPage() {
   useEffect(() => { document.title = t.docTitle; }, [t.docTitle]);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  // first_name + last_name are the source of truth (same as the Flutter
+  // profile); the database derives full_name from them.
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   // Name shown in the greeting: only changes once it is saved, not while typing.
   const [savedName, setSavedName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,9 +59,9 @@ function AccountPage() {
         .maybeSingle();
       if (profileError) setError(profileError.message);
       setEmail(profile?.email ?? user.email ?? "");
-      const name = profile?.full_name ?? [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
-      setDisplayName(name);
-      setSavedName(name);
+      setFirstName(profile?.first_name ?? "");
+      setLastName(profile?.last_name ?? "");
+      setSavedName(joinName(profile?.first_name, profile?.last_name) || (profile?.full_name ?? ""));
     })();
   }, []);
   const handleSave = async (event: FormEvent) => {
@@ -66,11 +73,13 @@ function AccountPage() {
     if (user) {
       const { error: updateError } = await supabase
         .from("users")
-        .update({ full_name: displayName, updated_at: new Date().toISOString() })
+        .update({ first_name: firstName.trim(), last_name: lastName.trim(), updated_at: new Date().toISOString() })
         .eq("id", user.id);
       if (updateError) setError(updateError.message);
       else {
-        setSavedName(displayName);
+        setFirstName(firstName.trim());
+        setLastName(lastName.trim());
+        setSavedName(joinName(firstName, lastName));
         setNotice(t.saved);
       }
     }
@@ -93,8 +102,13 @@ function AccountPage() {
 
           <form onSubmit={handleSave} className="mt-7 space-y-4">
             <div>
-              <label htmlFor="account-name" className="text-sm font-bold text-foreground">{t.name}</label>
-              <input id="account-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+              <label htmlFor="account-first-name" className="text-sm font-bold text-foreground">{t.firstName}</label>
+              <input id="account-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name"
+                className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" />
+            </div>
+            <div>
+              <label htmlFor="account-last-name" className="text-sm font-bold text-foreground">{t.lastName}</label>
+              <input id="account-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name"
                 className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary" />
             </div>
             <div>
