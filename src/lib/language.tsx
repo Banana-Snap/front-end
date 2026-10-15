@@ -48,8 +48,15 @@ const labels: Record<Language, string> = {
 export function LanguageSelector({ className = "" }: { className?: string }) {
   const { language, setLanguage } = useLanguage();
 
+  // Callers may position it (e.g. "absolute right-6 top-6"); only fall back to
+  // "relative" otherwise, since Tailwind's "relative" would override "absolute".
+  const positioned = className
+    .split(" ")
+    .some((c) => c === "absolute" || c === "fixed" || c === "sticky");
+  const position = positioned ? "" : "relative";
+
   return (
-    <label className={`relative inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm ${className}`}>
+    <label className={`${position} inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm ${className}`}>
       <Languages className="pointer-events-none size-4" aria-hidden="true" />
       <span className="sr-only">{labels[language]}</span>
       <select

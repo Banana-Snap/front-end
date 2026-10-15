@@ -167,7 +167,9 @@ export function AccountStats({
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    // Below md it matches the account card's width (max-w-md); on desktop the
+    // two cards sit side by side.
+    <div className="mx-auto grid w-full max-w-md gap-4 md:max-w-none md:grid-cols-2 [&>*]:min-w-0">
       <FrequencyCalendar
         userId={userId}
         language={language}
