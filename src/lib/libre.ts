@@ -24,9 +24,15 @@ export const connectLibre = createServerFn({ method: "POST" })
     return connectLibreForUser(context.userId, data);
   });
 
+// Rápida: solo lo que ya está guardado
 export const readLibre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(({ context }) => readLibreForUser(context.userId));
+  .handler(({ context }) => readLibreForUser(context.userId, { sync: false }));
+
+// Lenta: consulta a LibreLinkUp (como mucho una vez por minuto) y devuelve lo actualizado
+export const syncLibre = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(({ context }) => readLibreForUser(context.userId, { sync: true }));
 
 export const disconnectLibre = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

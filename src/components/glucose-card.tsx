@@ -2,20 +2,36 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
+import { Apple } from "lucide-react";
 import {
   CartesianGrid,
   Line,
   LineChart,
   ReferenceArea,
+  ReferenceDot,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 import type { Language } from "@/lib/language";
-import { connectLibre, disconnectLibre, readLibre } from "@/lib/libre";
+import {
+  connectLibre,
+  disconnectLibre,
+  readLibre,
+  syncLibre,
+} from "@/lib/libre";
+import { nutrientAmount, nutrientLabels } from "@/lib/nutrition";
 
 const PRIMARY = "#44bcc5";
+const MEAL_COLOR = "#e5484d";
+const Y_MAX = 300;
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Zona de tiempo en rango (TIR), en mg/dL
+const TIR_LOW = 63;
+const TIR_HIGH = 140;
 
 type ErrorCode =
   | "bad_credentials"
@@ -39,6 +55,7 @@ type Copy = {
   loading: string;
   empty: string;
   last: string;
+  meal: string;
   errors: Record<ErrorCode, string>;
 };
 
@@ -55,6 +72,7 @@ const copy = {
     loading: "Cargando…",
     empty: "Todavía no hay mediciones.",
     last: "Última medición",
+    meal: "Comida",
     errors: {
       bad_credentials: "Correo o contraseña incorrectos.",
       action_required:
@@ -80,6 +98,7 @@ const copy = {
     loading: "Loading…",
     empty: "No readings yet.",
     last: "Latest reading",
+    meal: "Meal",
     errors: {
       bad_credentials: "Incorrect email or password.",
       action_required: "Open the LibreLinkUp app and accept the pending terms.",
@@ -104,6 +123,7 @@ const copy = {
     loading: "Caricamento…",
     empty: "Ancora nessuna misurazione.",
     last: "Ultima misurazione",
+    meal: "Pasto",
     errors: {
       bad_credentials: "Email o password errate.",
       action_required: "Apri l'app LibreLinkUp e accetta i termini in sospeso.",
@@ -150,10 +170,8 @@ function toFifteenMinutePoints(
 const HOUR_MS = 60 * 60 * 1000;
 
 // Marcas del eje X en horas en punto (hora local), cada 1, 2 o 3 h según el rango para que no se encimen.
-function hourTicks(points: { x: number }[]): number[] {
-  if (points.length === 0) return [];
-  const min = points[0]!.x;
-  const max = points[points.length - 1]!.x;
+function hourTicks(min: number, max: number): number[] {
+  if (max <= min) return [];
   const spanHours = (max - min) / HOUR_MS;
   const step = spanHours <= 6 ? 1 : spanHours <= 12 ? 2 : 3;
   const start = new Date(min);
@@ -166,17 +184,94 @@ function hourTicks(points: { x: number }[]): number[] {
   return ticks;
 }
 
-export function GlucoseCard({ language }: { language: Language }) {
+type Meal = { x: number; title: string; carbs: number };
+
+async function fetchMeals(
+  userId: string,
+  start: number,
+  end: number,
+): Promise<Meal[]> {
+  const { data, error } = await supabase
+    .from("foods")
+    .select("created_at, title, is_manual, is_edited, foods")
+    .eq("user_id", userId)
+    .gte("created_at", new Date(start).toISOString())
+    .lte("created_at", new Date(end).toISOString())
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    x: new Date(row.created_at).getTime(),
+    title: row.title ?? "",
+    carbs: Math.round(nutrientAmount(row, "carbohydrates")),
+  }));
+}
+
+// Manzana dibujada en la parte de arriba del gráfico, con tooltip nativo
+function MealMarker({
+  cx,
+  cy,
+  label,
+}: {
+  cx: number | undefined;
+  cy: number | undefined;
+  label: string;
+}) {
+  if (cx === undefined || cy === undefined) return null;
+  return (
+    <g>
+      <title>{label}</title>
+      <Apple
+        x={cx - 8}
+        y={cy - 8}
+        width={16}
+        height={16}
+        color={MEAL_COLOR}
+        strokeWidth={2.25}
+      />
+    </g>
+  );
+}
+
+export function GlucoseCard({
+  userId,
+  language,
+}: {
+  userId: string;
+  language: Language;
+}) {
   const t: Copy = copy[language];
   const queryClient = useQueryClient();
   const read = useServerFn(readLibre);
+  const sync = useServerFn(syncLibre);
   const connect = useServerFn(connectLibre);
   const disconnect = useServerFn(disconnectLibre);
 
-  // Al montar y cada 60 s; el servidor igual no consulta a LibreLinkUp más de una vez por minuto
+  // 1) Lo guardado en la base: rápido, para pintar enseguida
   const { data, isLoading } = useQuery({
     queryKey: ["libre-readings"],
     queryFn: () => read(),
+  });
+  const connected = data?.ok === true && data.data.connected;
+
+  // 2) En paralelo y cada 60 s: traer lo nuevo de LibreLinkUp y reemplazar lo mostrado
+  useQuery({
+    queryKey: ["libre-sync"],
+    queryFn: async () => {
+      const result = await sync();
+      // Ante una falla pasajera de LibreLinkUp se sigue viendo lo último guardado;
+      // si la conexión venció, se muestra el formulario para reconectar.
+      if (result.ok || result.error === "expired")
+        queryClient.setQueryData(["libre-readings"], result);
+      return result.ok;
+    },
+    enabled: connected,
+    refetchInterval: 60_000,
+  });
+
+  // 3) Comidas de las últimas 24 h, sin esperar a la glucosa (RLS: solo las propias)
+  const { data: meals = [] } = useQuery({
+    queryKey: ["glucose-meals", userId],
+    queryFn: () => fetchMeals(userId, Date.now() - DAY_MS, Date.now()),
     refetchInterval: 60_000,
   });
 
@@ -184,8 +279,9 @@ export function GlucoseCard({ language }: { language: Language }) {
     mutationFn: (vars: { email: string; password: string }) =>
       connect({ data: vars }),
     onSuccess: (result) => {
-      if (result.ok)
-        queryClient.invalidateQueries({ queryKey: ["libre-readings"] });
+      if (!result.ok) return;
+      queryClient.invalidateQueries({ queryKey: ["libre-readings"] });
+      queryClient.invalidateQueries({ queryKey: ["libre-sync"] });
     },
   });
 
@@ -202,8 +298,6 @@ export function GlucoseCard({ language }: { language: Language }) {
       </section>
     );
   }
-
-  const connected = data.ok && data.data.connected;
 
   if (!connected) {
     let error: ErrorCode | null = !data.ok ? data.error : null;
@@ -222,11 +316,23 @@ export function GlucoseCard({ language }: { language: Language }) {
     );
   }
   console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-  console.log(data.data.readings);
+  console.log(meals);
   // Vienen de la más nueva a la más vieja
-  const readings = data.data.readings;
+  const readings = data.ok && data.data.connected ? data.data.readings : [];
   const latest = readings[0];
   const chartData = toFifteenMinutePoints(readings);
+  const rangeStart = chartData[0]?.x ?? 0;
+  // El gráfico llega hasta ahora aunque LibreLinkUp todavía no tenga lecturas recientes
+  // (p. ej. sensores que solo suben datos al escanear): así se ven las comidas de ese tramo.
+  const rangeEnd = Math.max(
+    chartData[chartData.length - 1]?.x ?? 0,
+    Date.now(),
+  );
+  // Solo las comidas que caen dentro del rango que muestra el gráfico
+  const visibleMeals = meals.filter(
+    (meal) => meal.x >= rangeStart && meal.x <= rangeEnd,
+  );
+  const carbsLabel = nutrientLabels[language].carbohydrates;
 
   return (
     <section className={CARD}>
@@ -264,25 +370,25 @@ export function GlucoseCard({ language }: { language: Language }) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={chartData}
-                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                margin={{ top: 16, right: 8, left: 0, bottom: 0 }}
               >
                 <CartesianGrid
                   vertical={false}
                   strokeDasharray="4 4"
                   className="stroke-border"
                 />
-                {/* Rango objetivo 70–180 mg/dL */}
+                {/* Zona de tiempo en rango (TIR) */}
                 <ReferenceArea
-                  y1={70}
-                  y2={180}
+                  y1={TIR_LOW}
+                  y2={TIR_HIGH}
                   fill={PRIMARY}
                   fillOpacity={0.08}
                 />
                 <XAxis
                   dataKey="x"
                   type="number"
-                  domain={["dataMin", "dataMax"]}
-                  ticks={hourTicks(chartData)}
+                  domain={[rangeStart, rangeEnd]}
+                  ticks={hourTicks(rangeStart, rangeEnd)}
                   interval={0}
                   tickFormatter={(x: number) => format(new Date(x), "HH:mm")}
                   tickLine={false}
@@ -292,7 +398,7 @@ export function GlucoseCard({ language }: { language: Language }) {
                   height={20}
                 />
                 <YAxis
-                  domain={[40, 300]}
+                  domain={[40, Y_MAX]}
                   width={40}
                   tickLine={false}
                   axisLine={false}
@@ -303,6 +409,16 @@ export function GlucoseCard({ language }: { language: Language }) {
                   formatter={(value: number) => [`${value} mg/dL`, t.title]}
                   labelFormatter={(x: number) => format(new Date(x), "HH:mm")}
                 />
+                {/* Comidas registradas: línea punteada debajo de la curva */}
+                {visibleMeals.map((meal) => (
+                  <ReferenceLine
+                    key={`line-${meal.x}`}
+                    x={meal.x}
+                    stroke={MEAL_COLOR}
+                    strokeOpacity={0.4}
+                    strokeDasharray="3 3"
+                  />
+                ))}
                 <Line
                   type="monotone"
                   dataKey="y"
@@ -311,6 +427,21 @@ export function GlucoseCard({ language }: { language: Language }) {
                   dot={{ r: 2.5, fill: PRIMARY, strokeWidth: 0 }}
                   isAnimationActive={false}
                 />
+                {/* …y la manzana arriba, encima de todo */}
+                {visibleMeals.map((meal) => (
+                  <ReferenceDot
+                    key={`apple-${meal.x}`}
+                    x={meal.x}
+                    y={Y_MAX}
+                    shape={(props: { cx?: number; cy?: number }) => (
+                      <MealMarker
+                        cx={props.cx}
+                        cy={props.cy}
+                        label={`${format(new Date(meal.x), "HH:mm")} · ${meal.title || t.meal} · ${carbsLabel}: ${meal.carbs} g`}
+                      />
+                    )}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -36,8 +36,10 @@ function AccountPage() {
   const { language } = useLanguage();
   const t = copy[language];
   useEffect(() => { document.title = t.docTitle; }, [t.docTitle]);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  // Ya validado por beforeLoad en /_authenticated: no hace falta volver a pedirlo
+  const { user } = Route.useRouteContext();
+  const userId = user.id;
+  const [email, setEmail] = useState(user.email ?? "");
   // first_name + last_name are the source of truth (same as the Flutter
   // profile); the database derives full_name from them.
   const [firstName, setFirstName] = useState("");
@@ -50,9 +52,6 @@ function AccountPage() {
 
   useEffect(() => {
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
       const { data: profile, error: profileError } = await supabase
         .from("users")
         .select("email, full_name, first_name, last_name")
@@ -64,7 +63,7 @@ function AccountPage() {
       setLastName(profile?.last_name ?? "");
       setSavedName(joinName(profile?.first_name, profile?.last_name) || (profile?.full_name ?? ""));
     })();
-  }, []);
+  }, [user]);
   const handleSave = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -131,7 +130,7 @@ function AccountPage() {
           </form>
         </div>
         {userId && <AccountStats userId={userId} language={language} />}
-        {userId && <GlucoseCard language={language} />}
+        {userId && <GlucoseCard userId={userId} language={language} />}
       </div>
     </main>
   );

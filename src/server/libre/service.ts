@@ -68,7 +68,9 @@ export function connectLibreForUser(
   });
 }
 
-export function readLibreForUser(userId: string) {
+// sync = false: solo lo guardado en la base (rápido, para el primer render).
+// sync = true: además trae lo nuevo de LibreLinkUp si pasó MIN_SYNC_INTERVAL_MS.
+export function readLibreForUser(userId: string, { sync }: { sync: boolean }) {
   return guard(async () => {
     const { data: conn, error: connError } = await supabaseAdmin
       .from("cgm_connections")
@@ -79,8 +81,9 @@ export function readLibreForUser(userId: string) {
     if (!conn) return { connected: false as const, readings: [] };
 
     const stale =
-      !conn.last_synced_at ||
-      Date.now() - Date.parse(conn.last_synced_at) > MIN_SYNC_INTERVAL_MS;
+      sync &&
+      (!conn.last_synced_at ||
+        Date.now() - Date.parse(conn.last_synced_at) > MIN_SYNC_INTERVAL_MS);
     if (stale) {
       if (Date.parse(conn.token_expires_at) <= Date.now())
         throw new LluError("expired");
