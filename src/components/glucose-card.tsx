@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
-import { Apple } from "lucide-react";
+import { Apple, SlidersHorizontal } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import type { Language } from "@/lib/language";
 import {
   connectLibre,
@@ -29,9 +30,11 @@ const PRIMARY = "#44bcc5";
 const MEAL_COLOR = "#e5484d";
 const Y_MAX = 300;
 const DAY_MS = 24 * 60 * 60 * 1000;
-// Zona de tiempo en rango (TIR), en mg/dL
-const TIR_LOW = 63;
-const TIR_HIGH = 140;
+// Zona de tiempo en rango (TIR) por defecto, en mg/dL; cada usuario puede cambiarla
+type Tir = { low: number; high: number };
+const DEFAULT_TIR: Tir = { low: 63, high: 140 };
+const TIR_MIN = 40;
+const TIR_MAX = 300;
 
 type ErrorCode =
   | "bad_credentials"
@@ -56,6 +59,12 @@ type Copy = {
   empty: string;
   last: string;
   meal: string;
+  tir: string;
+  tirLow: string;
+  tirHigh: string;
+  tirInvalid: string;
+  save: string;
+  cancel: string;
   errors: Record<ErrorCode, string>;
 };
 
@@ -73,6 +82,13 @@ const copy = {
     empty: "Todavía no hay mediciones.",
     last: "Última medición",
     meal: "Comida",
+    tir: "TIR",
+    tirLow: "Mínimo (mg/dL)",
+    tirHigh: "Máximo (mg/dL)",
+    tirInvalid:
+      "Ingresá números enteros entre 40 y 300, con el mínimo menor que el máximo.",
+    save: "Guardar",
+    cancel: "Cancelar",
     errors: {
       bad_credentials: "Correo o contraseña incorrectos.",
       action_required:
@@ -99,6 +115,13 @@ const copy = {
     empty: "No readings yet.",
     last: "Latest reading",
     meal: "Meal",
+    tir: "TIR",
+    tirLow: "Low (mg/dL)",
+    tirHigh: "High (mg/dL)",
+    tirInvalid:
+      "Enter whole numbers between 40 and 300, with the low below the high.",
+    save: "Save",
+    cancel: "Cancel",
     errors: {
       bad_credentials: "Incorrect email or password.",
       action_required: "Open the LibreLinkUp app and accept the pending terms.",
@@ -124,6 +147,13 @@ const copy = {
     empty: "Ancora nessuna misurazione.",
     last: "Ultima misurazione",
     meal: "Pasto",
+    tir: "TIR",
+    tirLow: "Minimo (mg/dL)",
+    tirHigh: "Massimo (mg/dL)",
+    tirInvalid:
+      "Inserisci numeri interi tra 40 e 300, con il minimo inferiore al massimo.",
+    save: "Salva",
+    cancel: "Annulla",
     errors: {
       bad_credentials: "Email o password errate.",
       action_required: "Apri l'app LibreLinkUp e accetta i termini in sospeso.",
@@ -207,6 +237,54 @@ async function fetchMeals(
 }
 
 // Manzana dibujada en la parte de arriba del gráfico, con tooltip nativo
+// El TIR se guarda en user_preferences.preferences.glucose_target (RLS: cada uno la suya)
+type Preferences = { [key: string]: Json | undefined };
+
+async function fetchPreferences(userId: string): Promise<Preferences> {
+  const { data, error } = await supabase
+    .from("user_preferences")
+    .select("preferences")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  const prefs = data?.preferences;
+  return prefs && typeof prefs === "object" && !Array.isArray(prefs)
+    ? prefs
+    : {};
+}
+
+function isValidTir(low: number, high: number): boolean {
+  return (
+    Number.isInteger(low) &&
+    Number.isInteger(high) &&
+    low >= TIR_MIN &&
+    high <= TIR_MAX &&
+    low < high
+  );
+}
+
+function tirFrom(prefs: Preferences): Tir {
+  const raw = prefs["glucose_target"];
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return DEFAULT_TIR;
+  const low = Number(raw["low"]);
+  const high = Number(raw["high"]);
+  return isValidTir(low, high) ? { low, high } : DEFAULT_TIR;
+}
+
+// Conserva el resto de las preferencias que pudiera haber en la fila
+async function saveTir(
+  userId: string,
+  prefs: Preferences,
+  tir: Tir,
+): Promise<Preferences> {
+  const preferences: Preferences = { ...prefs, glucose_target: tir };
+  const { error } = await supabase
+    .from("user_preferences")
+    .upsert({ user_id: userId, preferences }, { onConflict: "user_id" });
+  if (error) throw error;
+  return preferences;
+}
+
 function MealMarker({
   cx,
   cy,
@@ -291,6 +369,20 @@ export function GlucoseCard({
       queryClient.invalidateQueries({ queryKey: ["libre-readings"] }),
   });
 
+  const { data: preferences = {} } = useQuery({
+    queryKey: ["user-preferences", userId],
+    queryFn: () => fetchPreferences(userId),
+  });
+  const tir = tirFrom(preferences);
+  const [editingTir, setEditingTir] = useState(false);
+  const tirMutation = useMutation({
+    mutationFn: (next: Tir) => saveTir(userId, preferences, next),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(["user-preferences", userId], saved);
+      setEditingTir(false);
+    },
+  });
+
   if (isLoading || !data) {
     return (
       <section className={CARD}>
@@ -315,8 +407,7 @@ export function GlucoseCard({
       />
     );
   }
-  console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-  console.log(meals);
+
   // Vienen de la más nueva a la más vieja
   const readings = data.ok && data.data.connected ? data.data.readings : [];
   const latest = readings[0];
@@ -340,15 +431,37 @@ export function GlucoseCard({
         <h2 className="truncate text-lg font-black text-foreground">
           {t.title}
         </h2>
-        <button
-          type="button"
-          onClick={() => disconnectMutation.mutate()}
-          disabled={disconnectMutation.isPending}
-          className="shrink-0 text-sm text-muted-foreground hover:text-primary disabled:opacity-60"
-        >
-          {t.disconnect}
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setEditingTir((open) => !open)}
+            aria-expanded={editingTir}
+            className="flex items-center gap-1 text-sm font-bold text-muted-foreground hover:text-primary"
+          >
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            {t.tir} {tir.low}–{tir.high}
+          </button>
+          <button
+            type="button"
+            onClick={() => disconnectMutation.mutate()}
+            disabled={disconnectMutation.isPending}
+            className="text-sm text-muted-foreground hover:text-primary disabled:opacity-60"
+          >
+            {t.disconnect}
+          </button>
+        </div>
       </div>
+
+      {editingTir && (
+        <TirForm
+          t={t}
+          tir={tir}
+          busy={tirMutation.isPending}
+          failed={tirMutation.isError}
+          onSave={(next) => tirMutation.mutate(next)}
+          onCancel={() => setEditingTir(false)}
+        />
+      )}
 
       {latest ? (
         <>
@@ -379,8 +492,8 @@ export function GlucoseCard({
                 />
                 {/* Zona de tiempo en rango (TIR) */}
                 <ReferenceArea
-                  y1={TIR_LOW}
-                  y2={TIR_HIGH}
+                  y1={tir.low}
+                  y2={tir.high}
                   fill={PRIMARY}
                   fillOpacity={0.08}
                 />
@@ -450,6 +563,110 @@ export function GlucoseCard({
         <p className="mt-4 text-sm text-muted-foreground">{t.empty}</p>
       )}
     </section>
+  );
+}
+
+function TirForm({
+  t,
+  tir,
+  busy,
+  failed,
+  onSave,
+  onCancel,
+}: {
+  t: Copy;
+  tir: Tir;
+  busy: boolean;
+  failed: boolean;
+  onSave: (tir: Tir) => void;
+  onCancel: () => void;
+}) {
+  const [low, setLow] = useState(String(tir.low));
+  const [high, setHigh] = useState(String(tir.high));
+  const valid = isValidTir(Number(low), Number(high));
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (valid) onSave({ low: Number(low), high: Number(high) });
+  };
+
+  const inputClass =
+    "mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 space-y-3 rounded-md border border-border bg-background p-4"
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label
+            htmlFor="tir-low"
+            className="text-sm font-bold text-foreground"
+          >
+            {t.tirLow}
+          </label>
+          <input
+            id="tir-low"
+            type="number"
+            inputMode="numeric"
+            min={TIR_MIN}
+            max={TIR_MAX}
+            step={1}
+            required
+            value={low}
+            onChange={(e) => setLow(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="tir-high"
+            className="text-sm font-bold text-foreground"
+          >
+            {t.tirHigh}
+          </label>
+          <input
+            id="tir-high"
+            type="number"
+            inputMode="numeric"
+            min={TIR_MIN}
+            max={TIR_MAX}
+            step={1}
+            required
+            value={high}
+            onChange={(e) => setHigh(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+      </div>
+      {!valid && (
+        <p role="alert" className="text-sm font-bold text-destructive">
+          {t.tirInvalid}
+        </p>
+      )}
+      {failed && (
+        <p role="alert" className="text-sm font-bold text-destructive">
+          {t.errors.internal}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={busy || !valid}
+          className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-extrabold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+        >
+          {t.save}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground hover:bg-accent"
+        >
+          {t.cancel}
+        </button>
+      </div>
+    </form>
   );
 }
 
