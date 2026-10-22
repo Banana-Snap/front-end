@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      cgm_connections: {
+        Row: {
+          account_id_hash: string
+          created_at: string
+          last_synced_at: string | null
+          patient_id: string
+          provider: string
+          region_base_url: string
+          token_ciphertext: string
+          token_expires_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id_hash: string
+          created_at?: string
+          last_synced_at?: string | null
+          patient_id: string
+          provider?: string
+          region_base_url: string
+          token_ciphertext: string
+          token_expires_at: string
+          user_id: string
+        }
+        Update: {
+          account_id_hash?: string
+          created_at?: string
+          last_synced_at?: string | null
+          patient_id?: string
+          provider?: string
+          region_base_url?: string
+          token_ciphertext?: string
+          token_expires_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      glucose_readings: {
+        Row: {
+          created_at: string
+          id: number
+          measured_at: string
+          source: string
+          trend: number | null
+          user_id: string
+          value_mg_dl: number
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          measured_at: string
+          source?: string
+          trend?: number | null
+          user_id: string
+          value_mg_dl: number
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          measured_at?: string
+          source?: string
+          trend?: number | null
+          user_id?: string
+          value_mg_dl?: number
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          preferences: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          preferences?: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          preferences?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       foods: {
         Row: {
           created_at: string
