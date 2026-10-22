@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import instagram_logo from "@/assets/instagram_logo.png";
 import { LanguageSelector, useLanguage, type Language } from "@/lib/language";
 import { AccountStats } from "@/components/account-stats";
+import { GlucoseCard } from "@/components/glucose-card";
 
 export const Route = createFileRoute("/_authenticated/cuenta")({
   component: AccountPage,
@@ -130,6 +131,7 @@ function AccountPage() {
           </form>
         </div>
         {userId && <AccountStats userId={userId} language={language} />}
+        {userId && <GlucoseCard language={language} />}
       </div>
     </main>
   );
