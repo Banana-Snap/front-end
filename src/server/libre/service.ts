@@ -26,10 +26,18 @@ async function guard<T>(fn: () => Promise<T>): Promise<LibreResult<T>> {
     return { ok: true, data: await fn() };
   } catch (e) {
     if (e instanceof LluError) return { ok: false, error: e.code };
-    console.error(
-      "libre: error interno",
-      e instanceof Error ? e.name : typeof e,
-    ); // nunca el payload
+    // Solo nombre, código y mensaje (p. ej. variable de entorno faltante o error de Postgres);
+    // nunca el payload (tiene la contraseña) ni `details` de Postgres (puede incluir la fila).
+    const err = (e ?? {}) as {
+      name?: unknown;
+      code?: unknown;
+      message?: unknown;
+    };
+    console.error("libre: error interno", {
+      name: String(err.name ?? typeof e),
+      code: err.code === undefined ? undefined : String(err.code),
+      message: String(err.message ?? "").slice(0, 300),
+    });
     return { ok: false, error: "internal" };
   }
 }

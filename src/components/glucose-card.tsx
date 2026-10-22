@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { format } from "date-fns";
-import { Apple, SlidersHorizontal } from "lucide-react";
+import { Apple, Eye, EyeOff, SlidersHorizontal } from "lucide-react";
 import {
   CartesianGrid,
   Line,
@@ -54,6 +54,8 @@ type Copy = {
   email: string;
   password: string;
   connect: string;
+  showPassword: string;
+  hidePassword: string;
   disconnect: string;
   loading: string;
   empty: string;
@@ -77,6 +79,8 @@ const copy = {
     email: "Correo de LibreLinkUp",
     password: "Contraseña",
     connect: "Conectar",
+    showPassword: "Mostrar contraseña",
+    hidePassword: "Ocultar contraseña",
     disconnect: "Desconectar",
     loading: "Cargando…",
     empty: "Todavía no hay mediciones.",
@@ -110,6 +114,8 @@ const copy = {
     email: "LibreLinkUp email",
     password: "Password",
     connect: "Connect",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     disconnect: "Disconnect",
     loading: "Loading…",
     empty: "No readings yet.",
@@ -142,6 +148,8 @@ const copy = {
     email: "Email di LibreLinkUp",
     password: "Password",
     connect: "Collega",
+    showPassword: "Mostra password",
+    hidePassword: "Nascondi password",
     disconnect: "Scollega",
     loading: "Caricamento…",
     empty: "Ancora nessuna misurazione.",
@@ -683,11 +691,13 @@ function ConnectForm({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit(email, password);
     setPassword(""); // no dejar la contraseña en el estado del componente
+    setShowPassword(false);
   };
 
   return (
@@ -719,15 +729,30 @@ function ConnectForm({
           >
             {t.password}
           </label>
-          <input
-            id="libre-password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="off"
-            className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
-          />
+          <div className="relative mt-1.5">
+            <input
+              id="libre-password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="off"
+              className="w-full rounded-md border border-input bg-background py-2.5 pl-3 pr-10 text-sm text-foreground outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((shown) => !shown)}
+              aria-label={showPassword ? t.hidePassword : t.showPassword}
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-primary"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden="true" />
+              ) : (
+                <Eye className="size-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
         {error && (
           <p role="alert" className="text-sm font-bold text-destructive">
